@@ -56,8 +56,8 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) isRepositoryAccessible(ctx context.Context, owner, repo string) error {
-	_, err := pkg.RequestWithRetry[*http.Response](ctx, func() (*http.Response, error) {
-		_, resp, err := m.githubClient.Repositories.Get(ctx, owner, repo)
+	_, err := pkg.RequestWithRetry[*http.Response](ctx, func(timeoutCtx context.Context) (*http.Response, error) {
+		_, resp, err := m.githubClient.Repositories.Get(timeoutCtx, owner, repo)
 		return resp.Response, err
 	})
 	if err != nil {
