@@ -53,3 +53,5 @@ cover.out
 # Configs
 *.yml
 *.yaml
+./docker/
+./buffer/

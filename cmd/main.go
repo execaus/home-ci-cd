@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"home-ci-cd/config"
+	"home-ci-cd/db"
 	"home-ci-cd/engine"
 
 	"go.uber.org/zap"
@@ -29,13 +30,15 @@ func main() {
 		zap.L().Fatal(err.Error())
 	}
 
-	eng := engine.NewEngine(configOrganizer)
+	database := db.NewBoltDB()
+
+	eng := engine.NewEngine(configOrganizer, database)
+
+	configOrganizer.AddChangeListeners(eng.Reload)
 
 	if err = eng.Run(ctx); err != nil {
 		zap.L().Fatal(err.Error())
 	}
-
-	configOrganizer.AddChangeListeners(eng.Reload)
 
 	shutdownCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()

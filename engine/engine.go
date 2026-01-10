@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"home-ci-cd/config"
+	"home-ci-cd/db"
 	"home-ci-cd/repository"
 
 	"go.uber.org/zap"
@@ -14,14 +15,14 @@ type Engine struct {
 	repositoryManager *repository.Manager
 }
 
-func NewEngine(configOrganizer *config.Organizer) *Engine {
+func NewEngine(configOrganizer *config.Organizer, database db.DB) *Engine {
 	cfg, err := configOrganizer.Load()
 	if err != nil {
 		zap.L().Error(err.Error())
 		return nil
 	}
 
-	manager := repository.NewManager(cfg.Git)
+	manager := repository.NewManager(cfg.Git, cfg.BufferDirectory, database)
 
 	eng := &Engine{
 		configOrganizer:   configOrganizer,
@@ -39,7 +40,7 @@ func (e *Engine) Reload() {
 		return
 	}
 
-	_ = cfg
+	e.cfg = cfg
 
 	// TODO
 }
@@ -50,7 +51,19 @@ func (e *Engine) Run(ctx context.Context) error {
 		return err
 	}
 
-	// TODO
+	e.watch(ctx)
 
 	return nil
+}
+
+func (e *Engine) watch(ctx context.Context) {
+	repositories, err := e.repositoryManager.GetAll()
+	if err != nil {
+		zap.L().Error(err.Error())
+		return
+	}
+
+	for _, r := range repositories {
+		r.WatchBranches(ctx)
+	}
 }

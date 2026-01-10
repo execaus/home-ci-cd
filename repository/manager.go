@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"home-ci-cd/config"
+	"home-ci-cd/db"
 	"home-ci-cd/pkg"
 	"net/http"
 	"sync"
@@ -14,7 +15,20 @@ import (
 )
 
 type Manager struct {
-	githubClient *github.Client
+	githubClient    *github.Client
+	repositories    []config.Repository
+	bufferDirectory string
+	db              db.DB
+}
+
+func NewManager(cfg config.Git, bufferDirectory string, database db.DB) *Manager {
+	m := &Manager{
+		githubClient:    github.NewClient(nil).WithAuthToken(cfg.Github.Token),
+		bufferDirectory: bufferDirectory,
+		db:              database,
+	}
+
+	return m
 }
 
 func (m *Manager) Load(ctx context.Context, repositories []config.Repository) error {
@@ -26,9 +40,9 @@ func (m *Manager) Load(ctx context.Context, repositories []config.Repository) er
 		go func(errs []error, index int) {
 			defer wg.Done()
 
-			errs[index] = m.isRepositoryAccessible(ctx, repository.Owner, repository.RepoName)
+			errs[index] = m.isRepositoryAccessible(ctx, repository.Owner, repository.Repo)
 			if errs[index] == nil {
-				zap.L().Info(fmt.Sprintf("successfully connect repository %s/%s", repository.Owner, repository.RepoName))
+				zap.L().Info(fmt.Sprintf("successfully connect repository %s/%s", repository.Owner, repository.Repo))
 			}
 		}(errs, i)
 	}
@@ -48,15 +62,9 @@ func (m *Manager) Load(ctx context.Context, repositories []config.Repository) er
 		return accumError
 	}
 
+	m.repositories = repositories
+
 	return nil
-}
-
-func NewManager(cfg config.Git) *Manager {
-	m := &Manager{
-		githubClient: github.NewClient(nil).WithAuthToken(cfg.Github.Token),
-	}
-
-	return m
 }
 
 func (m *Manager) isRepositoryAccessible(ctx context.Context, owner, repo string) error {
@@ -72,4 +80,20 @@ func (m *Manager) isRepositoryAccessible(ctx context.Context, owner, repo string
 	}
 
 	return nil
+}
+
+func (m *Manager) GetAll() ([]Repository, error) {
+	r := make([]Repository, len(m.repositories))
+
+	for i, repository := range m.repositories {
+		switch repository.Type {
+		case config.GithubType:
+			r[i] = NewGithubRepository(m.githubClient, repository, m.bufferDirectory, m.db)
+		default:
+			zap.L().Error(ErrInvalidGitType.Error())
+			return nil, ErrInvalidGitType
+		}
+	}
+
+	return r, nil
 }

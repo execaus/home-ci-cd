@@ -1,5 +1,11 @@
 package config
 
+type RepositoryType string
+
+const (
+	GithubType RepositoryType = "github"
+)
+
 type Config struct {
 	Git Git `yaml:"git"`
 	// Directory where repositories will be cloned for further processing
@@ -9,10 +15,11 @@ type Config struct {
 }
 
 type Repository struct {
+	Type RepositoryType `yaml:"type"`
 	// Repository owner
 	Owner string `yaml:"owner"`
 	// Repository name
-	RepoName string `yaml:"repoName"`
+	Repo string `yaml:"repo"`
 	// Automation pipelines for branch processing
 	BranchPipelines []BranchPipeline `yaml:"branchPipelines"`
 }
