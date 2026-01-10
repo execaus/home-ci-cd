@@ -1,0 +1,55 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Output of the Go coverage tool
+*.out
+
+# Build directories
+/bin/
+/build/
+/dist/
+/vendor/
+
+# Go modules
+/go.sum
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+tmp/
+*.tmp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore coverage and profiling files
+cover.out
+*.prof
+
+# Ignore compiled packages
+*.a
+
+# Optional: exclude generated Go code (if using codegen)
+**/*_gen.go
+
+# Configs
+*.yml
+*.yaml

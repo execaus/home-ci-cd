@@ -21,7 +21,7 @@ func NewEngine(configOrganizer *config.Organizer) *Engine {
 		return nil
 	}
 
-	manager := repository.NewManager()
+	manager := repository.NewManager(cfg.Git)
 
 	eng := &Engine{
 		configOrganizer:   configOrganizer,

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"home-ci-cd/config"
 	"home-ci-cd/pkg"
 	"net/http"
@@ -26,6 +27,9 @@ func (m *Manager) Load(ctx context.Context, repositories []config.Repository) er
 			defer wg.Done()
 
 			errs[index] = m.isRepositoryAccessible(ctx, repository.Owner, repository.RepoName)
+			if errs[index] == nil {
+				zap.L().Info(fmt.Sprintf("successfully connect repository %s/%s", repository.Owner, repository.RepoName))
+			}
 		}(errs, i)
 	}
 
@@ -47,18 +51,20 @@ func (m *Manager) Load(ctx context.Context, repositories []config.Repository) er
 	return nil
 }
 
-func NewManager() *Manager {
+func NewManager(cfg config.Git) *Manager {
 	m := &Manager{
-		githubClient: github.NewClient(nil),
+		githubClient: github.NewClient(nil).WithAuthToken(cfg.Github.Token),
 	}
 
 	return m
 }
 
 func (m *Manager) isRepositoryAccessible(ctx context.Context, owner, repo string) error {
-	_, err := pkg.RequestWithRetry[*http.Response](ctx, func(timeoutCtx context.Context) (*http.Response, error) {
-		_, resp, err := m.githubClient.Repositories.Get(timeoutCtx, owner, repo)
+	_, err := pkg.RequestWithRetry[*http.Response](ctx, func(tCtx context.Context) (*http.Response, error) {
+		_, resp, err := m.githubClient.Repositories.Get(tCtx, owner, repo)
 		return resp.Response, err
+	}, func(retryNumber int) {
+		zap.L().Warn(fmt.Sprintf("Retrying access to repository %s/%s, attempt %d", owner, repo, retryNumber))
 	})
 	if err != nil {
 		zap.L().Error(err.Error())

@@ -1,26 +1,37 @@
 package config
 
 type Config struct {
-	// Директория, в которую будут загружаться репозитории для дальнейшей работы с ними
-	BufferDirectory string
-	// Репозитории со сценариями автоматизации
-	Repositories []Repository
+	Git Git `yaml:"git"`
+	// Directory where repositories will be cloned for further processing
+	BufferDirectory string `yaml:"bufferDirectory"`
+	// Repositories with automation scripts
+	Repositories []Repository `yaml:"repositories"`
 }
 
 type Repository struct {
-	// Владелец репозитория
-	Owner string
-	// Имя репозитория
-	RepoName string
-	// Сценарии автоматизации обработки веток
-	BranchPipelines []BranchPipeline
+	// Repository owner
+	Owner string `yaml:"owner"`
+	// Repository name
+	RepoName string `yaml:"repoName"`
+	// Automation pipelines for branch processing
+	BranchPipelines []BranchPipeline `yaml:"branchPipelines"`
 }
 
 type BranchPipeline struct {
-	// Шаблон соответствия ветки
-	Template string
-	// Исполняемый файл Docker сборки
-	DockerFilePath string
-	// Команды для удаленного сервера
-	RemoteCommands []string
+	// Branch matching template
+	Template string `yaml:"template"`
+	// Docker build executable file
+	DockerFilePath string `yaml:"dockerFilePath"`
+	// Commands to run on remote server
+	RemoteCommands []string `yaml:"remoteCommands"`
+}
+
+type Git struct {
+	// Git related configurations
+	Github Github `yaml:"github"`
+}
+
+type Github struct {
+	// GitHub authentication token
+	Token string `yaml:"token"`
 }
